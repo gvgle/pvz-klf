@@ -70,20 +70,39 @@ export default function App() {
     }
   };
 
+  const [isPortrait, setIsPortrait] = useState(false);
+
+  useEffect(() => {
+    const checkOrientation = () => {
+      setIsPortrait(window.innerHeight > window.innerWidth);
+    };
+
+    checkOrientation();
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', checkOrientation);
+
+    return () => {
+      window.removeEventListener('resize', checkOrientation);
+      window.removeEventListener('orientationchange', checkOrientation);
+    };
+  }, []);
+
   return (
     <div className="w-full h-screen overflow-hidden bg-black text-white font-sans selection:bg-green-500/30 touch-none select-none">
       {renderScreen()}
-      
+
       {/* Portrait Warning Overlay for Mobile */}
-      <div className="portrait:flex landscape:hidden fixed inset-0 z-[999] bg-stone-950 flex-col items-center justify-center text-white p-8 text-center">
-        <div className="animate-pulse flex flex-col items-center">
-          <svg className="w-24 h-24 mb-6 text-amber-500 rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-          </svg>
-          <h2 className="text-3xl font-black mb-4 text-amber-400">请旋转手机</h2>
-          <p className="text-stone-300 text-lg">为了获得最佳游戏体验，<br/>请在横屏模式下进行游戏。</p>
+      {isPortrait && (
+        <div className="fixed inset-0 z-[999] bg-stone-950 flex flex-col items-center justify-center text-white p-8 text-center">
+          <div className="animate-pulse flex flex-col items-center">
+            <svg className="w-24 h-24 mb-6 text-amber-500 rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+            <h2 className="text-3xl font-black mb-4 text-amber-400">请旋转手机</h2>
+            <p className="text-stone-300 text-lg">为了获得最佳游戏体验，<br/>请在横屏模式下进行游戏。</p>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
