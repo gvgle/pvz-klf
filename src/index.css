@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@keyframes nod {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-10deg); }
+}
+.animate-nod {
+  animation: nod 1.5s ease-in-out infinite;
+}
+
+@keyframes leg-swing-1 {
+  0%, 100% { transform: translateX(-50%) rotate(-30deg); }
+  50% { transform: translateX(-50%) rotate(30deg); }
+}
+@keyframes leg-swing-2 {
+  0%, 100% { transform: translateX(-50%) rotate(30deg); }
+  50% { transform: translateX(-50%) rotate(-30deg); }
+}
+@keyframes arm-swing-1 {
+  0%, 100% { transform: translateX(-50%) rotate(40deg); }
+  50% { transform: translateX(-50%) rotate(-20deg); }
+}
+@keyframes arm-swing-2 {
+  0%, 100% { transform: translateX(-50%) rotate(-20deg); }
+  50% { transform: translateX(-50%) rotate(40deg); }
+}
+@keyframes body-bob {
+  0%, 100% { transform: translateY(0); }
+  25%, 75% { transform: translateY(-8%); }
+  50% { transform: translateY(0); }
+}
