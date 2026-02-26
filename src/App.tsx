@@ -9,14 +9,15 @@ const generateId = () => {
   return `${Date.now()}-${globalIdCounter}-${Math.random().toString(36).substr(2, 9)}`;
 };
 
-type PlantType = 'peashooter' | 'sunflower' | 'wallnut' | 'ultimate';
+type PlantType = 'peashooter' | 'sunflower' | 'wallnut' | 'ultimate' | 'reaper';
 type ZombieType = 'normal' | 'conehead' | 'buckethead' | 'fast';
 
 const PLANT_DATA = {
   peashooter: { cost: 100, hp: 6, name: '豌豆射手' },
   sunflower: { cost: 50, hp: 6, name: '向日葵' },
   wallnut: { cost: 50, hp: 72, name: '坚果墙' },
-  ultimate: { cost: 1000, hp: 999, name: '毁灭神' }
+  ultimate: { cost: 1000, hp: 999, name: '毁灭神' },
+  reaper: { cost: 500, hp: 10, name: '死神' }
 };
 
 const ZOMBIE_DATA = {
@@ -54,22 +55,35 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('menu');
   const [coins, setCoins] = useState(0);
   const [hasUltimate, setHasUltimate] = useState(false);
+  const [hasReaper, setHasReaper] = useState(false);
   const [redeemed, setRedeemed] = useState(false);
+  const [redeemedReaper, setRedeemedReaper] = useState(false);
 
   const renderScreen = () => {
     switch (currentScreen) {
       case 'menu': return <MainMenu onNavigate={setCurrentScreen} />;
-      case 'game': return <GameScreen onNavigate={setCurrentScreen} hasUltimate={hasUltimate} />;
-      case 'settings': return <SettingsScreen onNavigate={setCurrentScreen} coins={coins} setCoins={setCoins} redeemed={redeemed} setRedeemed={setRedeemed} />;
+      case 'game': return <GameScreen onNavigate={setCurrentScreen} hasUltimate={hasUltimate} hasReaper={hasReaper} />;
+      case 'settings': return <SettingsScreen onNavigate={setCurrentScreen} coins={coins} setCoins={setCoins} redeemed={redeemed} setRedeemed={setRedeemed} redeemedReaper={redeemedReaper} setRedeemedReaper={setRedeemedReaper} />;
       case 'achievements': return <AchievementsScreen onNavigate={setCurrentScreen} />;
-      case 'shop': return <ShopScreen onNavigate={setCurrentScreen} coins={coins} setCoins={setCoins} hasUltimate={hasUltimate} setHasUltimate={setHasUltimate} />;
+      case 'shop': return <ShopScreen onNavigate={setCurrentScreen} coins={coins} setCoins={setCoins} hasUltimate={hasUltimate} setHasUltimate={setHasUltimate} hasReaper={hasReaper} setHasReaper={setHasReaper} />;
       default: return <MainMenu onNavigate={setCurrentScreen} />;
     }
   };
 
   return (
-    <div className="w-full h-screen overflow-hidden bg-black text-white font-sans selection:bg-green-500/30">
+    <div className="w-full h-screen overflow-hidden bg-black text-white font-sans selection:bg-green-500/30 touch-none select-none">
       {renderScreen()}
+      
+      {/* Portrait Warning Overlay for Mobile */}
+      <div className="portrait:flex landscape:hidden fixed inset-0 z-[999] bg-stone-950 flex-col items-center justify-center text-white p-8 text-center">
+        <div className="animate-pulse flex flex-col items-center">
+          <svg className="w-24 h-24 mb-6 text-amber-500 rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+          <h2 className="text-3xl font-black mb-4 text-amber-400">请旋转手机</h2>
+          <p className="text-stone-300 text-lg">为了获得最佳游戏体验，<br/>请在横屏模式下进行游戏。</p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -82,12 +96,12 @@ function MainMenu({ onNavigate }: { onNavigate: (screen: Screen) => void }) {
     >
       <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"></div>
       
-      <div className="relative z-10 flex flex-col items-center gap-6 p-8 bg-black/60 rounded-3xl border-4 border-green-800/50 shadow-[0_0_40px_rgba(34,197,94,0.3)]">
-        <h1 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-b from-green-300 to-green-700 filter drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] mb-8 tracking-wider text-center">
-          伟大的柯立帆<br/><span className="text-2xl md:text-3xl text-green-400">Web Edition</span>
+      <div className="relative z-10 flex flex-col items-center gap-4 md:gap-6 p-6 md:p-8 bg-black/60 rounded-3xl border-4 border-green-800/50 shadow-[0_0_40px_rgba(34,197,94,0.3)] scale-90 md:scale-100">
+        <h1 className="text-4xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-b from-green-300 to-green-700 filter drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] mb-4 md:mb-8 tracking-wider text-center">
+          伟大的柯立帆<br/><span className="text-xl md:text-3xl text-green-400">Web Edition</span>
         </h1>
 
-        <div className="flex flex-col gap-4 w-64">
+        <div className="flex flex-col gap-3 md:gap-4 w-56 md:w-64">
           <MenuButton icon={<Play />} text="开始游戏" onClick={() => onNavigate('game')} primary />
           <MenuButton icon={<ShoppingCart />} text="商店" onClick={() => onNavigate('shop')} />
           <MenuButton icon={<Trophy />} text="成就" onClick={() => onNavigate('achievements')} />
@@ -117,7 +131,7 @@ function MenuButton({ icon, text, onClick, primary, variant = 'default' }: { ico
   );
 }
 
-function GameScreen({ onNavigate, hasUltimate }: { onNavigate: (screen: Screen) => void, hasUltimate: boolean }) {
+function GameScreen({ onNavigate, hasUltimate, hasReaper }: { onNavigate: (screen: Screen) => void, hasUltimate: boolean, hasReaper: boolean }) {
   const [levelIndex, setLevelIndex] = useState(0);
   const [sun, setSun] = useState(50);
   const [selectedSeed, setSelectedSeed] = useState<PlantType | null>(null);
@@ -125,17 +139,19 @@ function GameScreen({ onNavigate, hasUltimate }: { onNavigate: (screen: Screen) 
   const [suns, setSuns] = useState<{id: string, x: number, y: number}[]>([]);
   const [gameOver, setGameOver] = useState(false);
   const [playingVideo, setPlayingVideo] = useState(false);
+  const [playingReaperVideo, setPlayingReaperVideo] = useState(false);
   const [, setTick] = useState(0);
   
   const currentLevel = LEVELS[levelIndex];
 
   const gameState = useRef({
     bullets: [] as {id: string, row: number, x: number}[],
-    zombies: [] as {id: string, type: ZombieType, row: number, x: number, hp: number, speed: number, lastAttack: number}[],
+    zombies: [] as {id: string, type: ZombieType, row: number, x: number, hp: number, speed: number, lastAttack: number, isWeakened: boolean}[],
     zombiesToSpawn: [...currentLevel.zombies],
     lastSpawnTime: performance.now(),
     lastSkySunTime: performance.now(),
-    isGameOver: false
+    isGameOver: false,
+    reaperBuffActive: false
   });
   
   const plantsRef = useRef(plants);
@@ -182,7 +198,16 @@ function GameScreen({ onNavigate, hasUltimate }: { onNavigate: (screen: Screen) 
               const pIndex = next.findIndex(p => p.id === plantInFront.id);
               if (pIndex !== -1) {
                 next[pIndex] = { ...next[pIndex], hp: next[pIndex].hp - 1 };
-                if (next[pIndex].hp <= 0) next.splice(pIndex, 1);
+                if (next[pIndex].hp <= 0) {
+                  // If reaper dies, trigger buff
+                  if (next[pIndex].type === 'reaper') {
+                    setPlayingReaperVideo(true);
+                    gameState.current.reaperBuffActive = true;
+                    // Apply visual weak effect to existing zombies
+                    gameState.current.zombies.forEach(z => z.isWeakened = true);
+                  }
+                  next.splice(pIndex, 1);
+                }
               }
               return next;
             });
@@ -225,7 +250,8 @@ function GameScreen({ onNavigate, hasUltimate }: { onNavigate: (screen: Screen) 
           x: 100,
           hp: ZOMBIE_DATA[type].hp,
           speed: ZOMBIE_DATA[type].speed,
-          lastAttack: 0
+          lastAttack: 0,
+          isWeakened: state.reaperBuffActive
         });
         state.lastSpawnTime = time;
       }
@@ -256,12 +282,25 @@ function GameScreen({ onNavigate, hasUltimate }: { onNavigate: (screen: Screen) 
     return () => cancelAnimationFrame(animationFrameId);
   }, [levelIndex, currentLevel]);
 
-  // Plant Actions (Shooting & Sun Generation)
+  // Plant Actions (Shooting & Sun Generation) & Reaper Buff
   useEffect(() => {
     const interval = setInterval(() => {
       if (gameState.current.isGameOver) return;
       const time = performance.now();
       
+      // Reaper Buff: Damage weakened zombies
+      if (gameState.current.reaperBuffActive) {
+        for (let i = gameState.current.zombies.length - 1; i >= 0; i--) {
+          const z = gameState.current.zombies[i];
+          if (z.isWeakened) {
+            z.hp -= 0.5; // Damage every 2.5s
+            if (z.hp <= 0) {
+              gameState.current.zombies.splice(i, 1);
+            }
+          }
+        }
+      }
+
       // Peashooter shooting (slower: every 2500ms)
       const shooters = plantsRef.current.filter(p => p.type === 'peashooter');
       const newBullets = shooters.map(p => {
@@ -350,46 +389,51 @@ function GameScreen({ onNavigate, hasUltimate }: { onNavigate: (screen: Screen) 
         style={{ backgroundImage: 'url("https://raw.githubusercontent.com/gvgle/-/main/bwdkb%20dkwnkc.jpg")' }}
       >
         {/* Top Bar (Seed Bank & Level Info) */}
-        <div className="absolute top-2 left-2 right-2 flex justify-between items-start z-50 pointer-events-none">
-          <div className="flex gap-2 pointer-events-auto">
-            <div className="bg-amber-900/90 border-2 border-amber-700 rounded-lg p-2 flex flex-col items-center justify-center w-20 shadow-lg">
-              <span className="text-yellow-400 font-black text-xl drop-shadow-md">{sun}</span>
-              <span className="text-xs text-amber-200 font-bold">阳光</span>
+        <div className="absolute top-1 sm:top-2 left-1 sm:left-2 right-1 sm:right-2 flex justify-between items-start z-50 pointer-events-none">
+          <div className="flex gap-1 sm:gap-2 pointer-events-auto overflow-x-auto max-w-[70vw] sm:max-w-none pb-2 scrollbar-hide">
+            <div className="bg-amber-900/90 border-2 border-amber-700 rounded-lg p-1 sm:p-2 flex flex-col items-center justify-center w-12 sm:w-20 shadow-lg shrink-0">
+              <span className="text-yellow-400 font-black text-sm sm:text-xl drop-shadow-md">{sun}</span>
+              <span className="text-[10px] sm:text-xs text-amber-200 font-bold">阳光</span>
             </div>
             
-            {(Object.keys(PLANT_DATA) as PlantType[]).filter(t => t !== 'ultimate' || hasUltimate).map(type => (
+            {(Object.keys(PLANT_DATA) as PlantType[]).filter(t => {
+              if (t === 'ultimate') return hasUltimate;
+              if (t === 'reaper') return hasReaper;
+              return true;
+            }).map(type => (
               <div 
                 key={type}
                 onClick={() => sun >= PLANT_DATA[type].cost && setSelectedSeed(type)}
                 className={`
-                  relative w-16 h-20 rounded-lg border-2 cursor-pointer transition-all overflow-hidden
+                  relative w-12 h-16 sm:w-16 sm:h-20 rounded-lg border-2 cursor-pointer transition-all overflow-hidden shrink-0
                   ${sun < PLANT_DATA[type].cost ? 'opacity-50 grayscale cursor-not-allowed border-stone-600 bg-stone-800' : 
                     selectedSeed === type ? 'border-green-400 bg-green-900/80 scale-105 shadow-[0_0_15px_#4ade80]' : 
                     'border-amber-700 bg-amber-900/80 hover:bg-amber-800'}
                 `}
               >
-                <div className="absolute inset-0 flex items-center justify-center pb-4">
+                <div className="absolute inset-0 flex items-center justify-center pb-3 sm:pb-4 scale-75 sm:scale-100">
                   {type === 'peashooter' && <PeashooterPreview />}
                   {type === 'sunflower' && <SunflowerPreview />}
                   {type === 'wallnut' && <WallnutPreview />}
                   {type === 'ultimate' && <UltimatePreview />}
+                  {type === 'reaper' && <ReaperPreview />}
                 </div>
-                <div className="absolute bottom-0 w-full bg-black/60 text-center text-xs font-bold text-white py-0.5">
+                <div className="absolute bottom-0 w-full bg-black/60 text-center text-[10px] sm:text-xs font-bold text-white py-0.5">
                   {PLANT_DATA[type].cost}
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="flex flex-col items-end gap-2 pointer-events-auto">
+          <div className="flex flex-col items-end gap-1 sm:gap-2 pointer-events-auto shrink-0">
             <button 
               onClick={() => onNavigate('menu')} 
-              className="px-4 py-2 bg-stone-700 rounded-xl font-bold hover:bg-stone-600 border-b-4 border-stone-900 active:translate-y-1 active:border-b-0 text-sm"
+              className="px-2 py-1 sm:px-4 sm:py-2 bg-stone-700 rounded-lg sm:rounded-xl font-bold hover:bg-stone-600 border-b-2 sm:border-b-4 border-stone-900 active:translate-y-1 active:border-b-0 text-xs sm:text-sm"
             >
               菜单
             </button>
-            <div className="bg-black/60 px-4 py-2 rounded-lg border border-white/20 font-bold text-amber-400">
-              关卡 {currentLevel.level} / 30
+            <div className="bg-black/60 px-2 py-1 sm:px-4 sm:py-2 rounded-lg border border-white/20 font-bold text-amber-400 text-xs sm:text-base whitespace-nowrap">
+              关卡 {currentLevel.level}
             </div>
           </div>
         </div>
@@ -412,6 +456,7 @@ function GameScreen({ onNavigate, hasUltimate }: { onNavigate: (screen: Screen) 
                     {plant.type === 'peashooter' && <Peashooter />}
                     {plant.type === 'sunflower' && <Sunflower />}
                     {plant.type === 'wallnut' && <Wallnut />}
+                    {plant.type === 'reaper' && <Reaper />}
                   </div>
                 )}
               </div>
@@ -429,7 +474,7 @@ function GameScreen({ onNavigate, hasUltimate }: { onNavigate: (screen: Screen) 
               style={{ 
                 left: `${z.x}%`, 
                 top: `${yPos}%`, 
-                filter: ZOMBIE_DATA[z.type].filter,
+                filter: z.isWeakened ? 'hue-rotate(270deg) brightness(0.5) drop-shadow(0 0 10px purple)' : ZOMBIE_DATA[z.type].filter,
                 transform: `scale(${ZOMBIE_DATA[z.type].scale})`
               }}
             >
@@ -496,6 +541,21 @@ function GameScreen({ onNavigate, hasUltimate }: { onNavigate: (screen: Screen) 
               onEnded={() => setPlayingVideo(false)}
               className="w-full h-full object-cover"
             />
+          </div>
+        )}
+
+        {/* Reaper Video Overlay */}
+        {playingReaperVideo && (
+          <div className="absolute inset-0 z-[200] bg-black/90 flex items-center justify-center">
+            <video 
+              src="https://raw.githubusercontent.com/gvgle/111/main/sora-video-c6d801ce-c7c9-4295-83a8-6a86bfc80432.mp4" 
+              autoPlay 
+              onEnded={() => setPlayingReaperVideo(false)}
+              className="w-full h-full object-contain"
+            />
+            <div className="absolute bottom-10 text-purple-500 text-4xl font-black animate-pulse drop-shadow-[0_0_10px_purple]">
+              死神降临！全图僵尸虚弱！
+            </div>
           </div>
         )}
       </div>
@@ -571,6 +631,30 @@ function UltimatePreview() {
   return <img src={imgUrl} alt="ultimate" className="w-10 h-10 object-cover rounded-full border-2 border-red-500 shadow-[0_0_10px_red]" />;
 }
 
+function ReaperPreview() {
+  const imgUrl = "https://raw.githubusercontent.com/gvgle/111/main/20000000d.webp";
+  return <img src={imgUrl} alt="reaper" className="w-10 h-10 object-cover rounded-full border-2 border-purple-500 shadow-[0_0_10px_purple]" />;
+}
+
+function Reaper() {
+  const imgUrl = "https://raw.githubusercontent.com/gvgle/111/main/20000000d.webp";
+  const weaponUrl = "https://raw.githubusercontent.com/gvgle/111/main/kydfffffffffffffffffffffff.webp";
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-end pb-1 sm:pb-2 pointer-events-none z-10">
+      <div className="relative w-[80%] h-[80%] max-w-[70px] max-h-[70px]">
+        {/* Weapon */}
+        <div className="absolute top-[-20%] right-[-30%] w-[80%] h-[120%] z-20 origin-bottom animate-[arm-swing-1_2s_infinite_ease-in-out]">
+          <img src={weaponUrl} alt="weapon" className="w-full h-full object-contain drop-shadow-xl" />
+        </div>
+        {/* Body */}
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[100%] h-[100%] z-10">
+          <img src={imgUrl} alt="reaper" className="w-full h-full object-contain animate-[body-bob_3s_infinite_linear] drop-shadow-xl" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PoleZombie({ type }: { type: ZombieType }) {
   const poleImg = "https://raw.githubusercontent.com/gvgle/-/main/unndfkkkkkkfffffffffffamed.webp";
   
@@ -623,7 +707,7 @@ function PoleZombie({ type }: { type: ZombieType }) {
   );
 }
 
-function SettingsScreen({ onNavigate, coins, setCoins, redeemed, setRedeemed }: { onNavigate: (screen: Screen) => void, coins: number, setCoins: React.Dispatch<React.SetStateAction<number>>, redeemed: boolean, setRedeemed: React.Dispatch<React.SetStateAction<boolean>> }) {
+function SettingsScreen({ onNavigate, coins, setCoins, redeemed, setRedeemed, redeemedReaper, setRedeemedReaper }: { onNavigate: (screen: Screen) => void, coins: number, setCoins: React.Dispatch<React.SetStateAction<number>>, redeemed: boolean, setRedeemed: React.Dispatch<React.SetStateAction<boolean>>, redeemedReaper: boolean, setRedeemedReaper: React.Dispatch<React.SetStateAction<boolean>> }) {
   const [code, setCode] = useState('');
 
   const handleRedeem = () => {
@@ -633,31 +717,37 @@ function SettingsScreen({ onNavigate, coins, setCoins, redeemed, setRedeemed }: 
       alert('兑换成功！获得 1000 金币！');
     } else if (code === '54188' && redeemed) {
       alert('该兑换码已使用！');
+    } else if (code === 'sb250' && !redeemedReaper) {
+      setCoins(c => c + 1000);
+      setRedeemedReaper(true);
+      alert('兑换成功！获得 1000 金币！');
+    } else if (code === 'sb250' && redeemedReaper) {
+      alert('该兑换码已使用！');
     } else {
       alert('无效的兑换码！');
     }
   };
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center bg-stone-900 gap-6">
-      <h2 className="text-4xl font-bold text-stone-300 mb-4">设置</h2>
+    <div className="w-full h-full flex flex-col items-center justify-center bg-stone-900 gap-4 md:gap-6 p-4">
+      <h2 className="text-3xl md:text-4xl font-bold text-stone-300 mb-2 md:mb-4">设置</h2>
       
-      <div className="bg-stone-800 p-8 rounded-2xl border-2 border-stone-700 flex flex-col items-center gap-4">
-        <h3 className="text-2xl text-amber-400 font-bold">兑换码</h3>
-        <div className="flex gap-2">
+      <div className="bg-stone-800 p-6 md:p-8 rounded-2xl border-2 border-stone-700 flex flex-col items-center gap-4 w-full max-w-sm">
+        <h3 className="text-xl md:text-2xl text-amber-400 font-bold">兑换码</h3>
+        <div className="flex gap-2 w-full">
           <input 
             type="text" 
             value={code}
             onChange={e => setCode(e.target.value)}
             placeholder="输入兑换码" 
-            className="px-4 py-2 rounded-lg bg-stone-900 border border-stone-600 text-white outline-none focus:border-green-500"
+            className="flex-1 px-3 py-2 md:px-4 rounded-lg bg-stone-900 border border-stone-600 text-white outline-none focus:border-green-500 w-full"
           />
-          <button onClick={handleRedeem} className="px-4 py-2 bg-green-600 rounded-lg font-bold hover:bg-green-500">兑换</button>
+          <button onClick={handleRedeem} className="px-4 py-2 bg-green-600 rounded-lg font-bold hover:bg-green-500 whitespace-nowrap">兑换</button>
         </div>
         <p className="text-stone-400 text-sm">当前金币: {coins}</p>
       </div>
 
-      <button onClick={() => onNavigate('menu')} className="px-6 py-3 bg-stone-700 rounded-xl font-bold hover:bg-stone-600 border-b-4 border-stone-900 active:translate-y-1 active:border-b-0 mt-8">返回主菜单</button>
+      <button onClick={() => onNavigate('menu')} className="px-6 py-3 bg-stone-700 rounded-xl font-bold hover:bg-stone-600 border-b-4 border-stone-900 active:translate-y-1 active:border-b-0 mt-4 md:mt-8">返回主菜单</button>
     </div>
   );
 }
@@ -671,10 +761,11 @@ function AchievementsScreen({ onNavigate }: { onNavigate: (screen: Screen) => vo
   );
 }
 
-function ShopScreen({ onNavigate, coins, setCoins, hasUltimate, setHasUltimate }: { onNavigate: (screen: Screen) => void, coins: number, setCoins: React.Dispatch<React.SetStateAction<number>>, hasUltimate: boolean, setHasUltimate: React.Dispatch<React.SetStateAction<boolean>> }) {
+function ShopScreen({ onNavigate, coins, setCoins, hasUltimate, setHasUltimate, hasReaper, setHasReaper }: { onNavigate: (screen: Screen) => void, coins: number, setCoins: React.Dispatch<React.SetStateAction<number>>, hasUltimate: boolean, setHasUltimate: React.Dispatch<React.SetStateAction<boolean>>, hasReaper: boolean, setHasReaper: React.Dispatch<React.SetStateAction<boolean>> }) {
   const imgUrl = "https://raw.githubusercontent.com/gvgle/-/main/100000000000ed.jpg";
+  const reaperImgUrl = "https://raw.githubusercontent.com/gvgle/111/main/20000000d.webp";
 
-  const handleBuy = () => {
+  const handleBuyUltimate = () => {
     if (hasUltimate) {
       alert('你已经拥有该物品了！');
       return;
@@ -688,33 +779,69 @@ function ShopScreen({ onNavigate, coins, setCoins, hasUltimate, setHasUltimate }
     }
   };
 
+  const handleBuyReaper = () => {
+    if (hasReaper) {
+      alert('你已经拥有该物品了！');
+      return;
+    }
+    if (coins >= 1000) {
+      setCoins(c => c - 1000);
+      setHasReaper(true);
+      alert('购买成功！你现在可以在战斗中使用它了（需要500阳光）。');
+    } else {
+      alert('金币不足！');
+    }
+  };
+
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center bg-purple-950 gap-8">
-      <div className="absolute top-8 right-8 bg-amber-500 text-black px-6 py-2 rounded-full font-black text-xl shadow-[0_0_15px_rgba(245,158,11,0.5)]">
+    <div className="w-full h-full flex flex-col items-center justify-center bg-purple-950 gap-4 md:gap-8 p-4 overflow-y-auto">
+      <div className="absolute top-4 right-4 md:top-8 md:right-8 bg-amber-500 text-black px-4 py-1 md:px-6 md:py-2 rounded-full font-black text-sm md:text-xl shadow-[0_0_15px_rgba(245,158,11,0.5)] z-50">
         金币: {coins}
       </div>
       
-      <h2 className="text-5xl font-black text-purple-300 drop-shadow-lg">疯狂戴夫的黑市</h2>
+      <h2 className="text-3xl md:text-5xl font-black text-purple-300 drop-shadow-lg text-center mt-12 md:mt-0">疯狂戴夫的黑市</h2>
       
-      <div className="bg-purple-900/50 p-6 rounded-3xl border-4 border-purple-800 flex flex-col items-center gap-4 max-w-sm">
-        <img src={imgUrl} alt="Ultimate" className="w-48 h-48 object-cover rounded-2xl shadow-2xl border-4 border-red-500" />
-        <h3 className="text-3xl font-bold text-red-400">毁灭神</h3>
-        <p className="text-purple-200 text-center">战斗中消耗 1000 阳光召唤。<br/>播放专属动画并秒杀全屏僵尸！</p>
-        
-        <button 
-          onClick={handleBuy}
-          disabled={hasUltimate}
-          className={`mt-4 px-8 py-3 rounded-xl font-bold text-xl border-b-4 active:translate-y-1 active:border-b-0 transition-all ${
-            hasUltimate 
-              ? 'bg-stone-600 border-stone-800 text-stone-400 cursor-not-allowed'
-              : 'bg-amber-500 hover:bg-amber-400 border-amber-700 text-black shadow-[0_0_20px_rgba(245,158,11,0.4)]'
-          }`}
-        >
-          {hasUltimate ? '已拥有' : '1000 金币购买'}
-        </button>
+      <div className="flex flex-col md:flex-row gap-6 w-full max-w-4xl justify-center items-center">
+        {/* Ultimate */}
+        <div className="bg-purple-900/50 p-4 md:p-6 rounded-3xl border-4 border-purple-800 flex flex-col items-center gap-2 md:gap-4 w-full max-w-sm">
+          <img src={imgUrl} alt="Ultimate" className="w-32 h-32 md:w-48 md:h-48 object-cover rounded-2xl shadow-2xl border-4 border-red-500" />
+          <h3 className="text-2xl md:text-3xl font-bold text-red-400">毁灭神</h3>
+          <p className="text-purple-200 text-center text-sm md:text-base h-16">战斗中消耗 1000 阳光召唤。<br/>播放专属动画并秒杀全屏僵尸！</p>
+          
+          <button 
+            onClick={handleBuyUltimate}
+            disabled={hasUltimate}
+            className={`mt-2 md:mt-4 px-6 py-2 md:px-8 md:py-3 rounded-xl font-bold text-lg md:text-xl border-b-4 active:translate-y-1 active:border-b-0 transition-all w-full ${
+              hasUltimate 
+                ? 'bg-stone-600 border-stone-800 text-stone-400 cursor-not-allowed'
+                : 'bg-amber-500 hover:bg-amber-400 border-amber-700 text-black shadow-[0_0_20px_rgba(245,158,11,0.4)]'
+            }`}
+          >
+            {hasUltimate ? '已拥有' : '1000 金币购买'}
+          </button>
+        </div>
+
+        {/* Reaper */}
+        <div className="bg-purple-900/50 p-4 md:p-6 rounded-3xl border-4 border-purple-800 flex flex-col items-center gap-2 md:gap-4 w-full max-w-sm">
+          <img src={reaperImgUrl} alt="Reaper" className="w-32 h-32 md:w-48 md:h-48 object-cover rounded-2xl shadow-2xl border-4 border-purple-500" />
+          <h3 className="text-2xl md:text-3xl font-bold text-purple-400">死神</h3>
+          <p className="text-purple-200 text-center text-sm md:text-base h-16">战斗中消耗 500 阳光召唤。<br/>死亡时播放动画，全图僵尸虚弱持续扣血！</p>
+          
+          <button 
+            onClick={handleBuyReaper}
+            disabled={hasReaper}
+            className={`mt-2 md:mt-4 px-6 py-2 md:px-8 md:py-3 rounded-xl font-bold text-lg md:text-xl border-b-4 active:translate-y-1 active:border-b-0 transition-all w-full ${
+              hasReaper 
+                ? 'bg-stone-600 border-stone-800 text-stone-400 cursor-not-allowed'
+                : 'bg-amber-500 hover:bg-amber-400 border-amber-700 text-black shadow-[0_0_20px_rgba(245,158,11,0.4)]'
+            }`}
+          >
+            {hasReaper ? '已拥有' : '1000 金币购买'}
+          </button>
+        </div>
       </div>
 
-      <button onClick={() => onNavigate('menu')} className="px-8 py-4 bg-stone-700 rounded-xl font-bold text-xl hover:bg-stone-600 border-b-4 border-stone-900 active:translate-y-1 active:border-b-0 mt-4">返回主菜单</button>
+      <button onClick={() => onNavigate('menu')} className="px-6 py-2 md:px-8 md:py-4 bg-stone-700 rounded-xl font-bold text-lg md:text-xl hover:bg-stone-600 border-b-4 border-stone-900 active:translate-y-1 active:border-b-0 mt-2 md:mt-4">返回主菜单</button>
     </div>
   );
 }
