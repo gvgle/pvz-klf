@@ -70,39 +70,9 @@ export default function App() {
     }
   };
 
-  const [isPortrait, setIsPortrait] = useState(false);
-
-  useEffect(() => {
-    const checkOrientation = () => {
-      setIsPortrait(window.innerHeight > window.innerWidth);
-    };
-
-    checkOrientation();
-    window.addEventListener('resize', checkOrientation);
-    window.addEventListener('orientationchange', checkOrientation);
-
-    return () => {
-      window.removeEventListener('resize', checkOrientation);
-      window.removeEventListener('orientationchange', checkOrientation);
-    };
-  }, []);
-
   return (
     <div className="w-full h-screen overflow-hidden bg-black text-white font-sans selection:bg-green-500/30 touch-none select-none">
       {renderScreen()}
-
-      {/* Portrait Warning Overlay for Mobile */}
-      {isPortrait && (
-        <div className="fixed inset-0 z-[999] bg-stone-950 flex flex-col items-center justify-center text-white p-8 text-center">
-          <div className="animate-pulse flex flex-col items-center">
-            <svg className="w-24 h-24 mb-6 text-amber-500 rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-            </svg>
-            <h2 className="text-3xl font-black mb-4 text-amber-400">请旋转手机</h2>
-            <p className="text-stone-300 text-lg">为了获得最佳游戏体验，<br/>请在横屏模式下进行游戏。</p>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -164,7 +134,7 @@ function GameScreen({ onNavigate, hasUltimate, hasReaper }: { onNavigate: (scree
   const currentLevel = LEVELS[levelIndex];
 
   const gameState = useRef({
-    bullets: [] as {id: string, row: number, x: number}[],
+    bullets: [] as {id: string, type: 'pea' | 'blackball', row: number, x: number}[],
     zombies: [] as {id: string, type: ZombieType, row: number, x: number, hp: number, speed: number, lastAttack: number, isWeakened: boolean}[],
     zombiesToSpawn: [...currentLevel.zombies],
     lastSpawnTime: performance.now(),
@@ -324,9 +294,21 @@ function GameScreen({ onNavigate, hasUltimate, hasReaper }: { onNavigate: (scree
       const shooters = plantsRef.current.filter(p => p.type === 'peashooter');
       const newBullets = shooters.map(p => {
         const startX = 26.5 + (p.col * (70 / 9)) + 4; 
-        return { id: generateId(), row: p.row, x: startX };
+        return { id: generateId(), type: 'pea' as const, row: p.row, x: startX };
       });
       gameState.current.bullets.push(...newBullets);
+
+      // Reaper shooting (3 rows of black balls)
+      const reapers = plantsRef.current.filter(p => p.type === 'reaper');
+      const reaperBullets: {id: string, type: 'pea' | 'blackball', row: number, x: number}[] = [];
+      reapers.forEach(p => {
+        const startX = 26.5 + (p.col * (70 / 9)) + 4;
+        const rowsToShoot = [p.row - 1, p.row, p.row + 1].filter(r => r >= 0 && r <= 4);
+        rowsToShoot.forEach(r => {
+          reaperBullets.push({ id: generateId(), type: 'blackball' as const, row: r, x: startX });
+        });
+      });
+      gameState.current.bullets.push(...reaperBullets);
 
       // Sunflower generating sun (every 10000ms)
       setPlants(prev => {
@@ -505,6 +487,15 @@ function GameScreen({ onNavigate, hasUltimate, hasReaper }: { onNavigate: (scree
         {/* Bullets */}
         {gameState.current.bullets.map(b => {
           const yPos = 16 + (b.row * (80 / 5)) + 4; 
+          if (b.type === 'blackball') {
+            return (
+              <div 
+                key={b.id} 
+                className="absolute w-4 h-4 sm:w-6 sm:h-6 bg-black rounded-full shadow-[0_0_10px_purple] border-2 border-purple-900 pointer-events-none -translate-y-1/2 z-30" 
+                style={{ left: `${b.x}%`, top: `${yPos}%` }}
+              ></div>
+            );
+          }
           return (
             <div 
               key={b.id} 
